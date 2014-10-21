@@ -1,0 +1,22 @@
+#!/bin/sh
+DB=mysql
+THRIFT=taxi.thrift
+OUT=../taxi-simple
+OUTCPP=$OUT/taxi-simple-cli/thrift
+OUTJS=$OUT/js
+
+echo "Generate cpp.."
+echo "thrift -out $OUTCPP -gen cpp $THRIFT"
+cp $OUTCPP/* $OUT/taxi-simple-svc/thrift
+
+echo Generate js:jquery..
+thrift -out $OUTJS -gen js:jquery $THRIFT 
+
+echo generate ORM cpp classes..
+ODB=odb
+FIN=$OUTCPP/taxi_types.h
+INC=-I$OUTCPP
+OPT="--options-file taxi-odb-options-$DB.txt"
+$ODB -d $DB -DGEN_ODB --generate-query --generate-schema $OPT $INC $FIN
+cp taxi_types-odb.* $OUT/taxi-simple-svc/thrift
+rm taxi_types-odb.* 

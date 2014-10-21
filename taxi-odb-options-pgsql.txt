@@ -1,0 +1,3 @@
+--odb-epilogue '#include "taxi-odb-pragmas-pgsql.hxx"'
+--hxx-prologue '#include "taxi_odb_traits-pgsql.hxx"'
+

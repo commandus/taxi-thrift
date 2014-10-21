@@ -1,0 +1,3 @@
+--odb-epilogue '#include "taxi-odb-pragmas-mysql.hxx"'
+--hxx-prologue '#include "taxi_odb_traits-mysql.hxx"'
+
