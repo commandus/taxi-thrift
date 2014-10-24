@@ -101,6 +101,7 @@
 #pragma db index(taxi::ServiceOrder::"idx_serviceorder_cityid") member (cityid) 
 #pragma db index(taxi::ServiceOrder::"idx_serviceorder_passengerid") member (passengerid) 
 #pragma db index(taxi::ServiceOrder::"idx_serviceorder_ordertype") member (ordertype) 
+#pragma db index(taxi::ServiceOrder::"idx_serviceorder_iscalculated") member (iscalculated) 
 
 // #pragma db value(taxi::ServiceOrderStop)
 #pragma db object(taxi::ServiceOrderStop)
