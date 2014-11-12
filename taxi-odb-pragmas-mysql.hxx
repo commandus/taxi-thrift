@@ -213,3 +213,4 @@
 #pragma db member(taxi::AutoPayment::__isset) transient
 #pragma db member(taxi::CustomerStatistic::__isset) transient
 #pragma db member(taxi::TariffPlan::__isset) transient
+#pragma db member(taxi::NotificationEvent::__isset) transient

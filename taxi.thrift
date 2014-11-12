@@ -233,7 +233,7 @@ enum OrderStage
 	ORDERNEW	=	0,		//	заказ не обработан
 	ORDERACCEPT	=	1,		//	заказ принят
 	ORDERASSIGN	=	2,		//	сервис передал выбранному водителю уведомление, но не получил подтверждения
-	ORDERASSIGNED	=	3,		//	получил подтверждение от водителя, заказ принят
+	ORDERASSIGNED	=	3,		//	Не используется. получил подтверждение от водителя, заказ принят
 	ORDERCONFIRMED	=	4,		//	Пользователь согласился с временем ожидания, выставленного водителем
 	ORDERDRIVING	=	5,		//	Водитель приступил к исполнению заказа (выехал к Пользователю)
 	ORDERWAITING	=	6,		//	прибыл на место назначения, ожидает Пользователя
@@ -407,7 +407,7 @@ struct PassengerLimit
 	1:	ID id,					//	идентификатор
 	2:	NUMBER32 tripcount,
 	3:	NUMBER32 minutescount,
-	4:	NUMBER32 moneycount,
+	4:	CURR moneycount,
 }
 
 
@@ -416,10 +416,10 @@ typedef	map<Month, PassengerLimit>  PassengerLimitMonth
 struct Payload
 {
 	1:	NUMBER32 passengercount,		//	число пассажиров, чел.
-	2:	NUMBER32 baggagecount,		//	число мест багажа, шт. если по весу
-	3:	NUMBER32 baggageweight,		//	вес багажа, кг.
-	4:	NUMBER32 baggagewidth,		//	ширина всех мест багажа
-	5:	NUMBER32 baggageheight,		//	высота всех мест багажа
+	2:	NUMBER32 baggagecount,			//	число мест багажа, шт. если по весу
+	3:	NUMBER32 baggageweight,			//	вес багажа, кг.
+	4:	NUMBER32 baggagewidth,			//	ширина всех мест багажа
+	5:	NUMBER32 baggageheight,			//	высота всех мест багажа
 	6:	NUMBER32 papercount,			//	число листов (коррепонденции) (сопроводительная документация, курьерская доставка) если без веса
 	7:	NUMBER32 stopcount			//	число планируемых остановок для курбера по маршруту
 }
@@ -429,7 +429,7 @@ struct PassengerUsage
 	1:	ID id,					//	идентификатор
 	2:	NUMBER32 tripcount,
 	3:	NUMBER32 minutescount,
-	4:	NUMBER32 moneycount,
+	4:	CURR moneycount,
 	5:	Payload payload,			//	груз, пассажиры, курьерские заказы
 }
 
@@ -786,7 +786,10 @@ struct Driver
 	13:	NUMBER32 rating,	//	Рейтинг (карма)
 	14:	bool online,		//	Водитель на линии
 	15:	bool ismaster,		//	Бригадир
-	16:	Vehicleids vehicleids	//	текущие автомобили, используемые водителем при оказании услуг
+	16:	Vehicleids vehicleids,	//	текущие автомобили, используемые водителем при оказании услуг
+	17:	PassengerUsageMonth usagemonth,	//	статистика по месяцам
+	18:	PassengerUsageYear usageyear,	//	статистика по годам
+
 }
 
 typedef ID Driverid
@@ -881,8 +884,8 @@ struct ServiceOrder
 	24:	Location locstart,
 	25:	Location locfinish,
 	26:	ID preferreddriverid,	//	ID предпочитаемого водителя в дополнение к предпочитемому Заказчиком (вторая очередь). НЕ ВОДИТЕЛЬ, а ID!
-	27:	NUMBER32 totaltimefiscal,	//	чистое время в пути в секундах "по счетчику"
-	28:	NUMBER32 totaltimeactual,	//	чистое время в пути в секундах, выставленное водителем
+	27:	DATE totaltimefiscal,	//	чистое время в пути в секундах "по счетчику"
+	28:	DATE totaltimeactual,	//	чистое время в пути в секундах, выставленное водителем
 	29:	CURR sumfiscal,		//	сумма "по счетчику"
 	30:	CURR sumactual,		//	сумма к оплате (выставленная водителем в минутах с учетом скидок и др.)
 	31:	CabClass cabclass,	//	Класс экипажа
@@ -1349,6 +1352,26 @@ service PassengerService
 	ServiceOrder getServiceOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
 	/*
+		Get Passenger
+	*/
+	Passenger getPassenger(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get Customer
+	*/
+	Customer getCustomer(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get Dispatcher
+	*/
+	Dispatcher getDispatcher(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get Driver
+	*/
+	Driver getDriver(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
 		Add service order decline
 	*/
 	ServiceOrderDecline addServiceOrderDecline(1:Credentials credentials, 2: UserDevice userdevice, 3: ServiceOrderDecline value) throws(1: ServiceFailure servicefailure),
@@ -1524,7 +1547,7 @@ service PassengerService
 		Pings
 		personrole: Driver, Passenger, Manager 
 	*/
-	NotificationEvents getEvents(1:Credentials credentials, 2: UserDevice userdevice, 3: RowRange rowrange) throws(1: ServiceFailure servicefailure),
+	NotificationEvents getEvents(1:Credentials credentials, 2: UserDevice userdevice, 3: ID startId, 4: RowRange rowrange) throws(1: ServiceFailure servicefailure),
 
 	/*
 		Driver only, get online on/off
