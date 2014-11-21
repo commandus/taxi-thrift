@@ -450,6 +450,7 @@ struct UserDevice
 	7:	bool hasGPS,				//	геолокация по GPS
 	8:	bool isGPS,				//	геолокация по GPS включена
 	9:	GeoLocation geolocation,
+	10:	NUMBER32 apiversion,			//	useless 2014/11/19
 }
 
 typedef list<UserDevice> UserDevices
@@ -1731,6 +1732,11 @@ service PassengerService
 		Remove DriverBlackList
 	*/
 	void rmDriverBlackList(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Remove Passenger
+	*/
+	void rmPassenger(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
 
 	/*
 		Remove Notification

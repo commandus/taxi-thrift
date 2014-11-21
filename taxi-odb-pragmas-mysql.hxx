@@ -196,6 +196,7 @@
 #pragma db member(taxi::Vehicle::__isset) transient
 #pragma db member(taxi::Document::__isset) transient
 #pragma db member(taxi::Driver::__isset) transient
+#pragma db member(taxi::Manager::__isset) transient
 #pragma db member(taxi::Dispatcher::__isset) transient
 #pragma db member(taxi::ServiceOrder::__isset) transient
 #pragma db member(taxi::ServiceOrderStop::__isset) transient
