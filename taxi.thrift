@@ -6,7 +6,8 @@
 	Namespaces
 */
 namespace cpp	taxi
-namespace java	ru.car4b.thrift
+//namespace java	ru.car4b.thrift
+namespace java	ru.car4b.android.thrift
 namespace perl	taxi
 namespace d	taxi
 namespace php	taxi
@@ -717,8 +718,8 @@ struct Vehicle
 	4: VehicleClass vehicleclass,		//	класс авто в категории
 	5: VehicleStatus vehiclestatus,		//	текстовое описание в technicalcondition
 	6: ID vehiclebrandid,			//	DictEntry Производитель
-	7: ID vehiclemodel,			//	DictEntry Модель, сгруппировано по производителю
-	8: ID color,				//	DictEntry Цвет
+	7: ID vehiclemodelid,			//	DictEntry Модель, сгруппировано по производителю
+	8: ID colorid,				//	DictEntry Цвет
 	9: NUMBER32 year,				//	Год выпуска
 	10: STR plate,				//	Регистрационный номер
 	11: NUMBER32 platenumber,			//	Рег номер без букв
@@ -784,12 +785,13 @@ struct Driver
 	10:	STR nickname,		//	ник
 	11:	NUMBER32 callsign,	//	Позывной рации
 	12:	CabClass cabclass,	//	Класс экипажа
-	13:	NUMBER32 rating,	//	Рейтинг (карма)
+	13:	NUMBER32 rating,	//	Рейтинг (карма) 0- максимальная, 32767- минимальная
 	14:	bool online,		//	Водитель на линии
 	15:	bool ismaster,		//	Бригадир
 	16:	Vehicleids vehicleids,	//	текущие автомобили, используемые водителем при оказании услуг
 	17:	PassengerUsageMonth usagemonth,	//	статистика по месяцам
 	18:	PassengerUsageYear usageyear,	//	статистика по годам
+	19:	NUMBER32 rating5,	//	Рейтинг (карма) наоборот, считая 5 максимальным. 5-rating. т.е. 5->0, 4->1,...0->5. при установлении: если rating5 != 5-rating, то приоритет имеет большее число(то есть ненулевое), если равны, то rating5. То есть по умолчанию устанавливается низший приоритет 5
 
 }
 
@@ -867,8 +869,8 @@ struct ServiceOrder
 	6:	OrderFeatures orderfeatures,//	дополнительные фичи: кресло, и т.д.
 	7:	RoleOrgService svc,	//	Сервис (в каком городе, чьи авто)
 	8:	ID dispatcherid,	//	№ диспетчера в организация диспетчера
-	9:	Personid	passengerid,	//  passenger person
-	10:	Sheduleid	sheduleid,	// != 0 shedule identifier
+	9:	Personid passengerid,	//  passenger person
+	10:	Sheduleid sheduleid,	// != 0 shedule identifier
 	11:	Passengerids passengers,	//	Начальный пользователь клиента (может быть пустым, или несколько)
 	12:	ServiceOrderStopids stops,//	Промежуточные остановки
 	13:	Payload payload,	//	Загрузка
@@ -895,7 +897,8 @@ struct ServiceOrder
 	34:	bool hasstops,		//	есть промежуточные остановки или точки доставки (приема документов курьером)
 	35:	STR notes,		//	пометки
 	36:	bool iscalculated,	//	сумма подсчитана
-	37:	NUMBER32 offers		//	количество экипажей, которым было предложено взять заказ
+	37:	NUMBER32 offers,	//	количество экипажей, которым было предложено взять заказ
+	38:	NUMBER32 flagsstagesent	//	маска отправенных нотификаций на стадии
 }
 
 typedef ID ServiceOrderid
@@ -1203,6 +1206,41 @@ service PassengerService
 		id: organization identifier
 	*/
 	Org	getOrg(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get vehicle
+		id: vehicle identifier
+	*/
+	Vehicle	getVehicle(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get vehicles by list
+		ids: vehicle identifiers
+	*/
+	Vehicles	getVehicles(1:Credentials credentials, 2: UserDevice userdevice, 3: Vehicleids ids) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get vehicles by driver id
+		ids: vehicle identifiers
+	*/
+	Vehicles	getDriverVehicles(1:Credentials credentials, 2: UserDevice userdevice, 3: Driverid id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Get DictEntry
+	*/
+	DictEntry	getDictEntry(1:Credentials credentials, 2: UserDevice userdevice, 3: ID id) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Add vehicle to driver id
+		id: driver identifier
+	*/
+	Vehicle	addDriverVehicle(1:Credentials credentials, 2: UserDevice userdevice, 3: Driverid id, 4: Vehicle value) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Remove vehicle from driver id
+		id: driver identifier
+	*/
+	void	rmDriverVehicle(1:Credentials credentials, 2: UserDevice userdevice, 3: Driverid id, 4: Vehicleid value) throws(1: ServiceFailure servicefailure),
 
 	/*
 		Check credentials, Driver
