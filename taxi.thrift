@@ -95,10 +95,10 @@ enum TaxiServiceRole
 */
 enum PersonRole 
 {
-	ADMIN		=	0		//	не используется, Сервис
-	MANAGER		=	1,		//	Бухгалтер или Сотрудник службы
+	ADMIN		=	0		//	не используется, Сервиса диспетчеров пассажиров
+	MANAGER		=	1,		//	Бухгалтер или Сотрудник Сервиса(диспетчера пассажиров
 	CUSTOMER	=	2,		//	Клиент
-	DISPATCHER	=	3,		//	Диспетчер
+	DISPATCHER	=	3,		//	Диспетчер экипажей таксомоторной службы (автобазы)
 	DRIVER		=	4,		//	Водитель, ИП
 	MASTER		=	5,		//	Водитель бриагадир
 	OPERATOR	=	6,		//	Customer+Passenger
@@ -334,6 +334,7 @@ enum DeclineOrderCause
 	DECLINE_BY_DRIVER		=	1,
 	DECLINE_BY_SERVICE		=	2,
 	DECLINE_BY_PASSENGER		=	3,
+	DECLINE_BY_DISPATCHER		=	4,
 }
 
 enum BankRole
@@ -355,7 +356,15 @@ enum DictTag
 {
 	TAG_VEHICLE_COLOR	=	1,		//	Цвет
 	TAG_VEHICLE_BRAND	=	2,		//	Марка
-	TAG_VEHICLE_MODEL	=	3,		//	Модель
+	TAG_VEHICLE_MODEL	=	3		//	Модель
+}
+
+enum StageGroup
+{
+	ORDERS_ALL		=	0,		//	все
+	ORDERS_INIT		=	1,		//	новые
+	ORDERS_PROCESS		=	2,		//	взятые заказы
+	ORDERS_DONE		=	3		//	исполненные (успешно завершенные, завершенные с ошибками)
 }
 
 struct RowRange
@@ -658,8 +667,8 @@ struct Customer
 	3:	STR nickname,		//	Внутреннее имя для поиска
 	4:	TAG tag,		//	тег (группа)
 	5:	OrgServiceDepts organization,	//	организация
-	6:	RoleOrgService svc,	//	Предпочитаемый сервис (диспетчер в городе, и опционально автобаза- чей водитель)
-	7:	ID dispatcherid,	//	закрепленный диспетчер
+	6:	RoleOrgService svc,	//	Предпочитаемый сервис (диспетчер в городе, и таксомоторной службы (автобазы)- чей водитель)
+	7:	ID dispatcherid,	//	закрепленный диспетчер экипажей таксомоторной службы (автобазы).
 	8:	TaxType taxtype,	//	налогообложение
 	9:	bool active,		//	false: договор расторгнут
 	10:	bool enabled,		//	false: обслуживание приостановлено (задолженность,...)	
@@ -775,7 +784,7 @@ struct Driver
 {
 	1:	ID id,			//	Driver Id
 	2:	ID cityid,		//	Город, где сейчас находится водитель (дублирует RoleOrgService)
-	3:	RoleOrgService svc,	//	Сервис (диспетчер в городе, и опционально автобаза- чей водитель)
+	3:	RoleOrgService svc,	//	Сервис (организация диспетчера пассажиров в городе- car4b, и организация диспетчера экипажей таксомоторной службы (автобазы)
 	4:	GeoLocation geolocation,//	Последнее нахождение
 	5:	DATE updated,		//	Время, когда последний раз определялись координаты
 	6:	ID serviceorderid,	//	0 - свободен, иначе номер заказа
@@ -814,15 +823,20 @@ typedef map <Driverid, DriverOnline> DriverOnlineMap
 typedef map<Cityid, DriverOnlineMap> CityDriverOnlineMap
 typedef list<DriverOnline> DriverOnlines
 
+/*
+	Диспетчер экипажей таксомоторной службы (автобазы) может быть прикреплен к Клиенту (Customer) независимо 
+	от того, прикоеплена ли к нему организация диспетче6ра экипажей таксомоторной службы (автобазы)
+*/
 struct Dispatcher
 {
 	1:	ID id,			//	Dispatcher Id
-	2:	RoleOrgService svc,	//	Сервис (диспетчер в городе, и опционально автобаза- чей водитель)
+	2:	RoleOrgService svc,	//	Сервис (диспетчер пассажиров в городе- car4b, и диспетчер машин таксомоторной службы (автобазы)
 	3:	EmployeeStatus status,	//	Действующий Неработающий Удаленный
 	4:	Person person,		//	was OrgPositionPerson ФИО, телефон
 	5:	DocumentMap license,	//	могут быть какие то документы
 	6:	STR nickname,		//	ник
 	7:	bool online,		//	Диспетчер на смене
+	8:	ID cityid		//	Город, за который отвечает диспетчер. Диспетчер может быть в другом городе
 }
 
 typedef ID Dispatcherid
@@ -859,6 +873,26 @@ typedef list<ServiceOrderStop> ServiceOrderStops
 
 typedef ID Sheduleid
 
+/*
+	properties
+*/
+typedef map<STR, STR> Strings
+
+/*
+	Common property name
+*/
+const list<STR> CommonProperties = [
+	"drivercallsign",
+	"driverfirstname",
+	"driverlastname",
+	"drivermiddlename",
+	"driverphone",
+	"vehiclebrand",
+	"vehiclemodel",
+	"vehiclecolor",
+	"vehicleplate"
+]
+
 struct ServiceOrder
 {
 	1:	ID id,			//	Номер счета
@@ -868,7 +902,7 @@ struct ServiceOrder
 	5:	OrderTimeType ordertimetype,//	Тип заказа по времени
 	6:	OrderFeatures orderfeatures,//	дополнительные фичи: кресло, и т.д.
 	7:	RoleOrgService svc,	//	Сервис (в каком городе, чьи авто)
-	8:	ID dispatcherid,	//	№ диспетчера в организация диспетчера
+	8:	ID dispatcherid,	//	№ диспетчера в организация диспетчера экипажей таксомоторной службы (автобазы)
 	9:	Personid passengerid,	//  passenger person
 	10:	Sheduleid sheduleid,	// != 0 shedule identifier
 	11:	Passengerids passengers,	//	Начальный пользователь клиента (может быть пустым, или несколько)
@@ -898,7 +932,8 @@ struct ServiceOrder
 	35:	STR notes,		//	пометки
 	36:	bool iscalculated,	//	сумма подсчитана
 	37:	NUMBER32 offers,	//	количество экипажей, которым было предложено взять заказ
-	38:	NUMBER32 flagsstagesent	//	маска отправенных нотификаций на стадии
+	38:	NUMBER32 flagsstagesent,//	маска отправенных нотификаций на стадии
+	39:	Strings properties 	//	разные свойства в виде строк
 }
 
 typedef ID ServiceOrderid
@@ -1565,7 +1600,7 @@ service PassengerService
 	/*
 		List of Orders
 	*/
-	ServiceOrders	findServiceOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ServiceOrder search, 4: DateRange sheduletime, 5: RowRange rowrange) throws(1: ServiceFailure servicefailure),
+	ServiceOrders	findServiceOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ServiceOrder search, 4: DateRange sheduletime, 5: StageGroup stagegroup, 6: RowRange rowrange) throws(1: ServiceFailure servicefailure),
 
 	/*
 		List of OrderDecline 
@@ -1615,9 +1650,11 @@ service PassengerService
 	bool startWaiting(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
 	/*
-		Driver only, водитель везет
+		Driver, Dispatcher only, водитель везет
+		Если вызывает Dispatcher, он должен указать водителя. Указание водителя водителем неопределенно- может в будущем назаначает напарнику
+		или бригадир. Водитель нормально не должен указывать этот параметр
 	*/
-	bool startDriving(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
+	bool startDriving(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid, 4: Driver driver) throws(1: ServiceFailure servicefailure),
 
 	/*
 		Driver only, водитель останавливается на остановке
@@ -1625,7 +1662,7 @@ service PassengerService
 	bool stopDriving(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
 	/*
-		Driver only, водитель останавливается на остановке
+		Driver only, водитель завершил поездку
 	*/
 	bool completeOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
