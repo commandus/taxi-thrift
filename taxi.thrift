@@ -237,13 +237,13 @@ enum OrderStage
 	ORDERASSIGNED	=	3,		//	Не используется. получил подтверждение от водителя, заказ принят
 	ORDERCONFIRMED	=	4,		//	Пользователь согласился с временем ожидания, выставленного водителем
 	ORDERDRIVING	=	5,		//	Водитель приступил к исполнению заказа (выехал к Пользователю)
-	ORDERWAITING	=	6,		//	прибыл на место назначения, ожидает Пользователя
+	ORDERWAITING	=	6,		//	прибыл на начальную точку маршрута, ожидает Пользователя
 	ORDERTRANSPORTING=	7,		//	везет Пользователя к месту назначения
 	ORDERSTOP	=	8,		//	Временная остановка
 	ORDERCOMPLETE	=	9,		//	Заказ выполнен
 	ORDERDECLINED	=	10,		//	заказ отвергнут сервисом (нехороший клиент, нет свободных экипажей, ..)
 	ORDERCANCELLED	=	11,		//	Заказ отменен Пользователем
-	ORDERFAILED	=	12		//	Заказ отменен Водителем
+	ORDERFAILED	=	12		//	Заказ отменен Водителем или никем не взят(просрочено исполнение)
 }
 
 enum PaymentState
@@ -1636,13 +1636,13 @@ service PassengerService
 	bool setOnline(1:Credentials credentials, 2: UserDevice userdevice, 3: bool value) throws(1: ServiceFailure servicefailure),
 
 	/*
-		Driver only, response to notification event EMITTER_ACCEPTED=-13
+		Driver & dispatcher only, response to notification event EMITTER_ACCEPTED=-13
 		Take order confirm=true
 		Take off order confirm=false
 		provisionminutes, in minutes
 		Return true success, false- service does not send invite to the driver!
 	*/
-	bool takeOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid, 4: bool confirm, 5: NUMBER32 provisionminutes) throws(1: ServiceFailure servicefailure),
+	bool takeOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid, 4: bool confirm, 5: NUMBER32 provisionminutes, 6: Driver driver) throws(1: ServiceFailure servicefailure),
 
 	/*
 		Driver only, водитель прибыл на место
@@ -1650,7 +1650,7 @@ service PassengerService
 	bool startWaiting(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
 	/*
-		Driver, Dispatcher only, водитель везет
+		Driver, Dispatcher only, водитель везет пассажира
 		Если вызывает Dispatcher, он должен указать водителя. Указание водителя водителем неопределенно- может в будущем назаначает напарнику
 		или бригадир. Водитель нормально не должен указывать этот параметр
 	*/
@@ -1672,7 +1672,7 @@ service PassengerService
 	bool cancelOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
 	/*
-		Driver only, водитель прекращает заказ
+		Driver & DIspactcher only, водитель или за него диспетчер прекращает заказ
 	*/
 	bool failOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: ID serviceorderid) throws(1: ServiceFailure servicefailure),
 
@@ -1680,6 +1680,11 @@ service PassengerService
 		Driver only, order list
 	*/
 	ServiceOrders	getDriverServiceOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: RowRange rowrange) throws(1: ServiceFailure servicefailure),
+
+	/*
+		Passenger only, order list
+	*/
+	ServiceOrders	getPassengerServiceOrder(1:Credentials credentials, 2: UserDevice userdevice, 3: RowRange rowrange) throws(1: ServiceFailure servicefailure),
 
 	/*
 	-----------------------------------------------------------------------------------------------------------------------------------
